@@ -1,0 +1,51 @@
+version: '3.4'
+
+services:
+  eth_mainnet:
+    image: parity/parity:stable
+    container_name: eth_mainnet
+    restart: always
+    user: root
+    volumes:
+      - "eth-mainnet-data:/home/parity/.local/share/io.parity.ethereum"
+    command: --light --jsonrpc-interface all --jsonrpc-hosts all --jsonrpc-apis all --mode last --base-path /home/parity/.local/share/io.parity.ethereum/
+  inc_mainnet:
+    image: incognitochain/incognito-mainnet:20201008_1
+    container_name: inc_mainnet
+    restart: always
+    volumes:
+      - "inc-mainnet-data:/data"
+    depends_on:
+      - eth_mainnet
+    ports:
+      - 9433:9433
+      - 9334:9334
+    environment:
+      NODE_PORT: "9433"
+      RPC_PORT: "9334"
+      BOOTNODE_IP: mainnet-bootnode.incognito.org:9330
+      GETH_NAME: "eth_mainnet"
+      MININGKEY: ""
+      FULLNODE: "1"
+      GETH_NAME: mainnet.infura.io/v3/14c262b7eb804991901da280b4f88b37
+      GETH_PROTOCOL: https
+      TESTNET: "false"
+      LIMIT_FEE: "1"
+  logs:
+    image: incognitochain/logshipper:1.0.0
+    container_name: logshipper
+    restart: always
+    volumes:
+      - "inc-mainnet-data:/tmp"
+      - "logs-data:/usr/share/filebeat/data"
+    depends_on:
+      - inc_mainnet
+    environment:
+      RAW_LOG_PATHS: "/tmp/*.txt"
+      JSON_LOG_PATHS: "/tmp/*.json"
+      LOGSTASH_ADDRESSES: "34.94.14.147:5000"
+
+volumes:
+  eth-mainnet-data:
+  inc-mainnet-data:
+  logs-data:
